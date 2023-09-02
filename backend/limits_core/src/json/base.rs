@@ -205,7 +205,7 @@ impl Default for Base {
                     url: Some("https://github.com/NGnius/PowerTools/wiki".to_owned()),
                 }
             ],
-            refresh: Some("http://limits.ngni.us:45000/powertools/v1".to_owned())
+            refresh: None
         }
     }
 }
