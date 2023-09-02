@@ -285,10 +285,14 @@ impl ApiMessageHandler {
                     func(());
                 }
                 // save
-                log::debug!("api_worker is saving...");
                 let is_persistent = *settings.general.persistent();
                 let save_path =
                     crate::utility::settings_dir().join(settings.general.get_path().clone());
+                if is_persistent {
+                    log::info!("Saving settings to {}", save_path.display());
+                } else {
+                    log::info!("Not saving settings");
+                }
                 if is_persistent {
                     let settings_clone = settings.json();
                     let save_json: SettingsJson = settings_clone.into();

@@ -92,6 +92,13 @@ impl Gpu {
                     setting: SettingVariant::Gpu,
                 })
                 .unwrap_or_else(|e| errors.push(e));
+
+            // also set STAMP limit as well.
+            lock.set_stapm_limit(*fast_ppt as _).map_err(|e| SettingError {
+                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *fast_ppt, e),
+                    setting: SettingVariant::Gpu,
+                })
+                .unwrap_or_else(|e| errors.push(e));
         } else if let Some(fast_ppt) = &self.state.old_fast_ppt {
             lock.set_fast_limit(*fast_ppt as _)
                 .map_err(|e| SettingError {
@@ -203,6 +210,13 @@ impl Gpu {
             lock.set_fast_limit(*fast_ppt as _)
                 .map_err(|e| SettingError {
                     msg: format!("RyzenAdj set_fast_limit({}) err: {}", *fast_ppt, e),
+                    setting: SettingVariant::Gpu,
+                })
+                .unwrap_or_else(|e| errors.push(e));
+
+            // also set STAMP limit as well.
+            lock.set_stapm_limit(*fast_ppt as _).map_err(|e| SettingError {
+                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *fast_ppt, e),
                     setting: SettingVariant::Gpu,
                 })
                 .unwrap_or_else(|e| errors.push(e));

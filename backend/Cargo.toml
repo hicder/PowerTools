@@ -23,12 +23,12 @@ async-trait = { version = "0.1" }
 
 # logging
 log = "0.4"
-simplelog = "0.12"
+simplelog = "0.12.1"
 
 # limits & driver functionality
 limits_core = { version = "2", path = "./limits_core" }
 regex = "1"
-libryzenadj = { version = "0.12" }
+libryzenadj = { version = "0.13.0" }
 # ureq's tls feature does not like musl targets
 ureq = { version = "2", features = ["json", "gzip", "brotli", "charset"], default-features = false, optional = true }
 
