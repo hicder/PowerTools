@@ -267,7 +267,7 @@ impl ApiMessageHandler {
         //let mut dirty_echo = true; // set everything twice, to make sure PowerTools wins on race conditions
         while let Ok(msg) = self.intake.recv() {
             let mut dirty = self.process(settings, msg);
-            log::info!("api_worker is processing... {}", dirty);
+            log::debug!("api_worker is processing... {}", dirty);
             while let Ok(msg) = self.intake.try_recv() {
                 dirty |= self.process(settings, msg);
             }
@@ -327,7 +327,7 @@ impl ApiMessageHandler {
                     }
                 }
             } else {
-                log::info!("Skipping callbacks for non-modify handled message(s)");
+                log::debug!("Skipping callbacks for non-modify handled message(s)");
             }
         }
     }
