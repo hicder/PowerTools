@@ -173,8 +173,8 @@ impl Default for Base {
                             fast_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
                             slow_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
                             ppt_step: Some(1_000),
-                            clock_min: Some(super::RangeLimit { min: Some(400), max: Some(1600) }),
-                            clock_max: Some(super::RangeLimit { min: Some(400), max: Some(1600) }),
+                            clock_min: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
+                            clock_max: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
                             clock_step: Some(100),
                             ..Default::default()
                         })),
