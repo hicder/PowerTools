@@ -23,6 +23,7 @@ export const GOVERNOR_CPU = "CPUs_governor";
 
 export const FAST_PPT_GPU = "GPU_fastPPT";
 export const SLOW_PPT_GPU = "GPU_slowPPT";
+export const TDP = "GPU_TDP";
 export const CLOCK_MIN_GPU = "GPU_min_clock";
 export const CLOCK_MAX_GPU = "GPU_max_clock";
 export const SLOW_MEMORY_GPU = "GPU_slow_memory";
