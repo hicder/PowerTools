@@ -1,5 +1,7 @@
+use std::{fs, thread};
 use libryzenadj::RyzenAdj;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use crate::persist::GpuJson;
 use crate::settings::generic::Gpu as GenericGpu;
@@ -56,6 +58,38 @@ impl Gpu {
         }
     }
 
+    fn get_thermal_policy(&self) -> u64 {
+        let tdp = if let Some(slow_ppt) = &self.generic.slow_ppt {
+            *slow_ppt
+        } else if let Some(slow_ppt) = &self.state.old_slow_ppt {
+            *slow_ppt
+        } else {
+            return 0;
+        };
+
+        log::info!("Current tdp: {}", tdp);
+
+        match tdp {
+            val if val < 12_000 => 2,
+            val if (12_000..=25_000).contains(&val) => 0,
+            _ => 1,
+        }
+    }
+
+    fn set_thermal_policy(&self, thermal_policy: u64) {
+        log::info!("Setting thermal policy: {}", thermal_policy);
+        let file_path = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
+        match fs::read_to_string(file_path) {
+            Ok(content) if content.trim() != thermal_policy.to_string() => {
+                thread::sleep(Duration::from_millis(50));
+                fs::write(file_path, thermal_policy.to_string())
+                    .expect("Couldn't change thermal policy")
+            }
+            _ => {}
+        }
+        log::info!("New thermal policy: {}", thermal_policy);
+    }
+
     fn set_all(&mut self) -> Result<(), Vec<SettingError>> {
         let mutex = match &self.implementor {
             Some(x) => x,
@@ -75,6 +109,12 @@ impl Gpu {
                 }]);
             }
         };
+
+        // Set thermal policy under lock.
+        // This might make UI a bit unresponsive, but it's safer.
+        let thermal_policy = self.get_thermal_policy();
+        self.set_thermal_policy(thermal_policy);
+
         let mut errors = Vec::new();
         if let Some(fast_ppt) = &self.generic.fast_ppt {
             if self.state.old_fast_ppt.is_none() {
