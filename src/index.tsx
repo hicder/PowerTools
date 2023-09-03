@@ -63,6 +63,7 @@ import {
 
   PERIODICAL_BACKEND_PERIOD,
   AUTOMATIC_REAPPLY_WAIT,
+  TDP,
 } from "./consts";
 import { set_value, get_value } from "usdpl-front";
 import { Debug } from "./components/debug";
@@ -146,6 +147,7 @@ const reload = function() {
   backend.resolve(backend.getGpuPpt(), (ppts: number[]) => {
     set_value(FAST_PPT_GPU, ppts[0]);
     set_value(SLOW_PPT_GPU, ppts[1]);
+    set_value(TDP, ppts[1]/1000);
   });
   backend.resolve(backend.getGpuClockLimits(), (limits: number[]) => {
     set_value(CLOCK_MIN_GPU, limits[0]);
