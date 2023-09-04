@@ -3,7 +3,7 @@
 ## What does it do?
 
 This is a heavily modified version of [PowerTools](https://git.ngni.us/NG-SD-Plugins/PowerTools.git) in order to work
-on the ROG Ally.
+on the ROG Ally. Note that these instructions are all run inside the ROG Ally desktop mode.
 
 ## Build
 
