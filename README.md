@@ -8,18 +8,16 @@ on the ROG Ally.
 ## Build
 
 0. Requirements: a functioning Rust toolchain for x86_64-unknown-linux-gnu (or -musl), pnpm, and some tech literacy
-1. In a terminal, navigate to the backend directory of this project and run `./build.sh`
-2. In the root of this project, run `pnpm run build`
+1. In the root of the directory:
+```shell
+./build_all.sh
+```
 
 ## Install
 Note that all these commands are run inside the Ally.
 
 1. Please use Decky's [built-in store](https://plugins.deckbrew.xyz/) to install official releases.
-2. Build the front-end and back-end for this modified plugin
-```shell
-./build_all.sh
-```
-Then copy these files to the decky loader's directory:
+2. Copy these files to the decky loader's directory:
 ```shell
 sudo systemctl stop plugin_loader
 sudo cp --preserve=mode /tmp/backend $HOME/homebrew/plugins/PowerTools/bin/backend
