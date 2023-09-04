@@ -16,7 +16,7 @@ on the ROG Ally. Note that these instructions are all run inside the ROG Ally de
 ## Install
 Note that all these commands are run inside the Ally.
 
-1. Please use Decky's [built-in store](https://plugins.deckbrew.xyz/) to install official releases.
+1. Please use Decky's [built-in store](https://plugins.deckbrew.xyz/) to install official releases of PowerTools.
 2. Copy these files to the decky loader's directory:
 ```shell
 sudo systemctl stop plugin_loader
