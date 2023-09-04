@@ -7,7 +7,7 @@ on the ROG Ally.
 
 ## Build
 
-0. Requirements: a functioning Rust toolchain for x86_64-unknown-linux-gnu (or -musl), pnpm, and some tech literacy
+0. Requirements: a functioning Rust toolchain for x86_64-unknown-linux-gnu (or -musl), pnpm
 1. In the root of the directory:
 ```shell
 ./build_all.sh
