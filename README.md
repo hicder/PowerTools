@@ -20,6 +20,7 @@ Note that all these commands are run inside the Ally.
 2. Copy these files to the decky loader's directory:
 ```shell
 sudo systemctl stop plugin_loader
+rm $HOME/.config/powertools/limits_cache.json
 sudo cp --preserve=mode /tmp/backend $HOME/homebrew/plugins/PowerTools/bin/backend
 sudo cp --preserve=mode /tmp/index.js $HOME/homebrew/plugins/PowerTools/dist/index.js
 sudo systemctl start plugin_loader
