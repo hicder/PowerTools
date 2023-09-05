@@ -13,6 +13,8 @@ on the ROG Ally. Note that these instructions are all run inside the ROG Ally de
 ./build_all.sh
 ```
 
+Alternatively, you can download `backend` and `index.js` from the Releases page.
+
 ## Install
 Note that all these commands are run inside the Ally.
 
