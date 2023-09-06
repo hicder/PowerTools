@@ -12,6 +12,8 @@ use crate::settings::{OnResume, OnSet, SettingError};
 #[derive(Debug, Clone)]
 pub struct Gpu {
     pub slow_memory: bool,
+    pub preset: Option<u64>,
+    pub stapm_ppt: Option<u64>,
     pub fast_ppt: Option<u64>,
     pub slow_ppt: Option<u64>,
     pub clock_limits: Option<MinMax<u64>>,
@@ -52,7 +54,9 @@ impl Gpu {
 
     pub fn from_limits(limits: limits_core::json::GenericGpuLimit) -> Self {
         Self {
+            preset: None,
             slow_memory: false,
+            stapm_ppt: None,
             fast_ppt: None,
             slow_ppt: None,
             clock_limits: None,
@@ -72,7 +76,13 @@ impl Gpu {
             None
         };
         Self {
+            preset: other.preset,
             slow_memory: false,
+            stapm_ppt: if limits.tdp.is_some() {
+                other.stapm_ppt
+            } else {
+                None
+            },
             fast_ppt: if limits.fast_ppt.is_some() {
                 other.fast_ppt
             } else {
@@ -94,6 +104,8 @@ impl Into<GpuJson> for Gpu {
     #[inline]
     fn into(self) -> GpuJson {
         GpuJson {
+            preset: self.preset,
+            stapm_ppt: self.stapm_ppt,
             fast_ppt: self.fast_ppt,
             slow_ppt: self.slow_ppt,
             clock_limits: self.clock_limits.map(|x| x.into()),
@@ -185,6 +197,10 @@ impl TGpu for Gpu {
         (self.fast_ppt, self.slow_ppt)
     }
 
+    fn get_ppt_tdp(&self) -> (Option<u64>, Option<u64>, Option<u64>) {
+        (self.stapm_ppt, self.fast_ppt, self.slow_ppt)
+    }
+
     fn clock_limits(&mut self, limits: Option<MinMax<u64>>) {
         if let Some(clock_min) = &self.limits.clock_min {
             if let Some(clock_max) = &self.limits.clock_max {
@@ -207,5 +223,25 @@ impl TGpu for Gpu {
 
     fn provider(&self) -> crate::persist::DriverJson {
         crate::persist::DriverJson::Generic
+    }
+
+    fn ppt_tdp(&mut self, tdp: Option<u64>, fast: Option<u64>, slow: Option<u64>) {
+        self.ppt(fast, slow);
+        if let Some(tdp_min) = &self.limits.tdp {
+            self.stapm_ppt = tdp.map(|x| {
+                x.clamp(
+                    tdp_min.min.unwrap_or(0),
+                    tdp_min.max.unwrap_or(u64::MAX),
+                )
+            });
+        }
+    }
+
+    fn get_preset(&self) -> Option<u64> {
+        self.preset
+    }
+
+    fn set_preset(&mut self, preset: Option<u64>) {
+        self.preset = preset
     }
 }

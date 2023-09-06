@@ -24,6 +24,7 @@ export const GOVERNOR_CPU = "CPUs_governor";
 export const FAST_PPT_GPU = "GPU_fastPPT";
 export const SLOW_PPT_GPU = "GPU_slowPPT";
 export const TDP = "GPU_TDP";
+export const PRESET_MODE_GPU = "PRESET_MODE_GPU";
 export const CLOCK_MIN_GPU = "GPU_min_clock";
 export const CLOCK_MAX_GPU = "GPU_max_clock";
 export const SLOW_MEMORY_GPU = "GPU_slow_memory";
@@ -34,6 +35,6 @@ export const PATH_GEN = "GENERAL_path";
 
 export const MESSAGE_LIST = "MESSAGE_messages";
 
-export const PERIODICAL_BACKEND_PERIOD = 5000; // milliseconds
+export const PERIODICAL_BACKEND_PERIOD = 1000; // milliseconds
 export const AUTOMATIC_REAPPLY_WAIT = 2000; // milliseconds
 

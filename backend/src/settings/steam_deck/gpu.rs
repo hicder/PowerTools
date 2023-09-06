@@ -345,6 +345,10 @@ impl Into<GpuJson> for Gpu {
     #[inline]
     fn into(self) -> GpuJson {
         GpuJson {
+            // TODO: Support Steam Deck
+            preset: None,
+            // TODO: Support Steam deck
+            stapm_ppt: None,
             fast_ppt: self.fast_ppt,
             slow_ppt: self.slow_ppt,
             clock_limits: self.clock_limits.map(|x| x.into()),
@@ -429,5 +433,21 @@ impl TGpu for Gpu {
 
     fn provider(&self) -> crate::persist::DriverJson {
         self.driver_mode.clone()
+    }
+
+    fn ppt_tdp(&mut self, _tdp: Option<u64>, _fast: Option<u64>, _slow: Option<u64>) {
+        todo!("Maybe support Steam Deck at some point?")
+    }
+
+    fn get_ppt_tdp(&self) -> (Option<u64>, Option<u64>, Option<u64>) {
+        todo!("Not supported by Steam Deck!")
+    }
+
+    fn get_preset(&self) -> Option<u64> {
+        todo!()
+    }
+
+    fn set_preset(&mut self, _preset: Option<u64>) {
+        todo!()
     }
 }
