@@ -209,8 +209,24 @@ export async function setGpuPpt(fast: number, slow: number): Promise<number[]> {
     return (await call_backend("GPU_set_ppt", [fast, slow])); // -> [fastPPT, slowPPT]
 }
 
+export async function setGpuPptTdp(tdp: number, fast: number, slow: number): Promise<number[]> {
+    return (await call_backend("GPU_set_ppt_tdp", [tdp, fast, slow])); // -> [tdp, fastPPT, slowPPT]
+}
+
+export async function setPreset(profile: number): Promise<number> {
+    return (await call_backend("GPU_set_preset", [profile]));
+}
+
 export async function getGpuPpt(): Promise<number[]> {
     return (await call_backend("GPU_get_ppt", [])); // -> [fastPPT, slowPPT]
+}
+
+export async function getPreset(): Promise<number> {
+    return (await call_backend("GPU_get_preset", []));
+}
+
+export async function getGpuPptTdp(): Promise<number[]> {
+    return (await call_backend("GPU_get_ppt_tdp", [])); // -> [tdp, fastPPT, slowPPT]
 }
 
 export async function unsetGpuPpt(): Promise<any[]> {

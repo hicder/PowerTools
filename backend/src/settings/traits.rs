@@ -47,7 +47,11 @@ pub trait TGpu: OnSet + OnResume + OnPowerEvent + Debug + Send {
 
     fn ppt(&mut self, fast: Option<u64>, slow: Option<u64>);
 
+    fn ppt_tdp(&mut self, tdp: Option<u64>, fast: Option<u64>, slow: Option<u64>);
+
     fn get_ppt(&self) -> (Option<u64>, Option<u64>);
+
+    fn get_ppt_tdp(&self) -> (Option<u64>, Option<u64>, Option<u64>);
 
     fn clock_limits(&mut self, limits: Option<MinMax<u64>>);
 
@@ -58,6 +62,10 @@ pub trait TGpu: OnSet + OnResume + OnPowerEvent + Debug + Send {
     fn provider(&self) -> crate::persist::DriverJson {
         crate::persist::DriverJson::AutoDetect
     }
+
+    fn get_preset(&self) -> Option<u64>;
+
+    fn set_preset(&mut self, preset: Option<u64>);
 }
 
 pub trait TCpus: OnSet + OnResume + OnPowerEvent + Debug + Send {

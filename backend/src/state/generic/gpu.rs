@@ -3,6 +3,7 @@ pub struct Gpu {
     pub clock_limits_set: bool,
     pub old_fast_ppt: Option<u64>,
     pub old_slow_ppt: Option<u64>,
+    pub old_stapm_ppt: Option<u64>,
 }
 
 impl std::default::Default for Gpu {
@@ -11,6 +12,7 @@ impl std::default::Default for Gpu {
             clock_limits_set: false,
             old_fast_ppt: None,
             old_slow_ppt: None,
+            old_stapm_ppt: None,
         }
     }
 }

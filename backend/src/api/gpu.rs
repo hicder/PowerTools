@@ -34,6 +34,26 @@ pub fn set_ppt(
     }
 }
 
+pub fn set_preset(sender: Sender<ApiMessage>) -> impl Fn(super::ApiParameterType) -> super::ApiParameterType {
+    let sender = Mutex::new(sender); // Sender is not Sync; this is required for safety
+    let setter = move |preset: u64| {
+        log::info!("set_preset {}", preset);
+        sender
+            .lock()
+            .unwrap()
+            .send(ApiMessage::Gpu(GpuMessage::SetPreset(Some(preset))))
+            .expect("set_ppt send failed")
+    };
+    move |params_in: super::ApiParameterType| {
+        if let Some(&Primitive::F64(preset)) = params_in.get(0) {
+            setter(preset as u64);
+            vec![(preset as u64).into()]
+        } else {
+            vec!["set_preset missing parameter 0".into()]
+        }
+    }
+}
+
 pub fn get_ppt(sender: Sender<ApiMessage>) -> impl AsyncCallable {
     let sender = Arc::new(Mutex::new(sender)); // Sender is not Sync; this is required for safety
     let getter = move || {
@@ -58,6 +78,60 @@ pub fn get_ppt(sender: Sender<ApiMessage>) -> impl AsyncCallable {
                 fast.map(|x| x.into()).unwrap_or(Primitive::Empty),
                 slow.map(|x| x.into()).unwrap_or(Primitive::Empty),
             ]
+        },
+    }
+}
+
+pub fn get_ppt_tdp(sender: Sender<ApiMessage>) -> impl AsyncCallable {
+    let sender = Arc::new(Mutex::new(sender)); // Sender is not Sync; this is required for safety
+    let getter = move || {
+        let sender2 = sender.clone();
+        move || {
+            let (tx, rx) = mpsc::channel();
+            let callback = move |ppt: (Option<u64>, Option<u64>, Option<u64>)| {
+                tx.send(ppt).expect("get_ppt callback send failed")
+            };
+            sender2
+                .lock()
+                .unwrap()
+                .send(ApiMessage::Gpu(GpuMessage::GetPptTdp(Box::new(callback))))
+                .expect("get_ppt send failed");
+            rx.recv().expect("get_ppt callback recv failed")
+        }
+    };
+    super::async_utils::AsyncIshGetter {
+        set_get: getter,
+        trans_getter: |(tdp, fast, slow): (Option<u64>, Option<u64>, Option<u64>)| {
+            vec![
+                tdp.map(|x| x.into()).unwrap_or(Primitive::Empty),
+                fast.map(|x| x.into()).unwrap_or(Primitive::Empty),
+                slow.map(|x| x.into()).unwrap_or(Primitive::Empty),
+            ]
+        },
+    }
+}
+
+pub fn get_preset(sender: Sender<ApiMessage>) -> impl AsyncCallable {
+    let sender = Arc::new(Mutex::new(sender)); // Sender is not Sync; this is required for safety
+    let getter = move || {
+        let sender2 = sender.clone();
+        move || {
+            let (tx, rx) = mpsc::channel();
+            let callback = move |preset: Option<u64>| {
+                tx.send(preset).expect("get_ppt callback send failed")
+            };
+            sender2
+                .lock()
+                .unwrap()
+                .send(ApiMessage::Gpu(GpuMessage::GetPreset(Box::new(callback))))
+                .expect("get_ppt send failed");
+            rx.recv().expect("get_ppt callback recv failed")
+        }
+    };
+    super::async_utils::AsyncIshGetter {
+        set_get: getter,
+        trans_getter: |preset: Option<u64>| {
+            vec![preset.map(|x| x.into()).unwrap_or(Primitive::Empty)]
         },
     }
 }
@@ -202,5 +276,32 @@ pub fn get_slow_memory(sender: Sender<ApiMessage>) -> impl AsyncCallable {
     super::async_utils::AsyncIshGetter {
         set_get: getter,
         trans_getter: |value: bool| vec![value.into()],
+    }
+}
+
+pub fn set_ppt_tdp(sender: Sender<ApiMessage>) -> impl Fn(super::ApiParameterType) -> super::ApiParameterType {
+    let sender = Mutex::new(sender); // Sender is not Sync; this is required for safety
+    let setter = move |tdp: u64, fast: u64, slow: u64| {
+        sender
+            .lock()
+            .unwrap()
+            .send(ApiMessage::Gpu(GpuMessage::SetPptTdp(Some(tdp), Some(fast), Some(slow))))
+            .expect("set_ppt_tdp send failed")
+    };
+    move |params_in: super::ApiParameterType| {
+        if let Some(&Primitive::F64(ppt_tdp)) = params_in.get(0) {
+            if let Some(&Primitive::F64(ppt_fast)) = params_in.get(1) {
+                if let Some(&Primitive::F64(ppt_slow)) = params_in.get(2) {
+                    setter(ppt_tdp as u64, ppt_fast as u64, ppt_slow as u64);
+                    vec![(ppt_tdp as u64).into(), (ppt_fast as u64).into(), (ppt_slow as u64).into()]
+                } else {
+                    vec!["set_ppt_tdp missing parameter 2".into()]
+                }
+            } else {
+                vec!["set_ppt_tdp missing parameter 1".into()]
+            }
+        } else {
+            vec!["set_ppt_tdp missing parameter 0".into()]
+        }
     }
 }

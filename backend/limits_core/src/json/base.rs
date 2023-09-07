@@ -170,9 +170,11 @@ impl Default for Base {
                             clock_step: 100,
                         })),
                         super::Limits::Gpu(super::GpuLimit::GenericAMD(super::GenericGpuLimit {
-                            fast_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
-                            slow_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
+                            fast_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(53_000) }),
+                            slow_ppt: Some(super::RangeLimit { min: Some(1_000), max: Some(43_000) }),
                             ppt_step: Some(1_000),
+                            tdp: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
+                            tdp_step: Some(1_000),
                             clock_min: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
                             clock_max: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
                             clock_step: Some(100),

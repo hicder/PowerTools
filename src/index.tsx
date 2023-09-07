@@ -64,6 +64,7 @@ import {
   PERIODICAL_BACKEND_PERIOD,
   AUTOMATIC_REAPPLY_WAIT,
   TDP,
+  PRESET_MODE_GPU,
 } from "./consts";
 import { set_value, get_value } from "usdpl-front";
 import { Debug } from "./components/debug";
@@ -143,11 +144,14 @@ const reload = function() {
     set_value(GOVERNOR_CPU, governors);
     backend.log(backend.LogLevel.Info, "POWERTOOLS: Governors from backend " + governors.toString());
   });
-
-  backend.resolve(backend.getGpuPpt(), (ppts: number[]) => {
-    set_value(FAST_PPT_GPU, ppts[0]);
-    set_value(SLOW_PPT_GPU, ppts[1]);
-    set_value(TDP, ppts[1]/1000);
+  backend.resolve(backend.getPreset(), (preset: number) => {
+    backend.log(backend.LogLevel.Info, "FRONTEND: Load preset mode: " + preset.toString());
+    set_value(PRESET_MODE_GPU, preset);
+  });
+  backend.resolve(backend.getGpuPptTdp(), (ppts: number[]) => {
+    set_value(TDP, ppts[0]/1000);
+    set_value(FAST_PPT_GPU, ppts[1]);
+    set_value(SLOW_PPT_GPU, ppts[2]);
   });
   backend.resolve(backend.getGpuClockLimits(), (limits: number[]) => {
     set_value(CLOCK_MIN_GPU, limits[0]);

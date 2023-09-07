@@ -25,6 +25,8 @@ impl Into<GpuJson> for Gpu {
     #[inline]
     fn into(self) -> GpuJson {
         GpuJson {
+            preset: None,
+            stapm_ppt: None,
             fast_ppt: None,
             slow_ppt: None,
             clock_limits: None,
@@ -86,5 +88,19 @@ impl TGpu for Gpu {
 
     fn provider(&self) -> crate::persist::DriverJson {
         crate::persist::DriverJson::Unknown
+    }
+
+    fn ppt_tdp(&mut self, _tdp: Option<u64>, _fast: Option<u64>, _slow: Option<u64>) {}
+
+    fn get_ppt_tdp(&self) -> (Option<u64>, Option<u64>, Option<u64>) {
+        (None, None, None)
+    }
+
+    fn get_preset(&self) -> Option<u64> {
+        todo!()
+    }
+
+    fn set_preset(&mut self, _preset: Option<u64>) {
+        todo!()
     }
 }

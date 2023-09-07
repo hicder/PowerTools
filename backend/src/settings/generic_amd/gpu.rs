@@ -59,19 +59,15 @@ impl Gpu {
     }
 
     fn get_thermal_policy(&self) -> u64 {
-        let tdp = if let Some(slow_ppt) = &self.generic.slow_ppt {
-            *slow_ppt
-        } else if let Some(slow_ppt) = &self.state.old_slow_ppt {
-            *slow_ppt
+        let tdp = if let Some(stapm_ppt) = &self.generic.stapm_ppt {
+            *stapm_ppt
         } else {
             return 0;
         };
 
-        log::info!("Current tdp: {}", tdp);
-
         match tdp {
             val if val < 12_000 => 2,
-            val if (12_000..=25_000).contains(&val) => 0,
+            val if (12_000..=24_000).contains(&val) => 0,
             _ => 1,
         }
     }
@@ -81,9 +77,12 @@ impl Gpu {
         let file_path = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
         match fs::read_to_string(file_path) {
             Ok(content) if content.trim() != thermal_policy.to_string() => {
-                thread::sleep(Duration::from_millis(50));
                 fs::write(file_path, thermal_policy.to_string())
-                    .expect("Couldn't change thermal policy")
+                    .expect("Couldn't change thermal policy");
+                
+                // kernel will automatically change TDP settings when we write to throttle_thermal_policy. 
+                // This might race if we modify TDP ourself. Wait a bit for kernel to do first.
+                thread::sleep(Duration::from_millis(2000));
             }
             _ => {}
         }
@@ -142,7 +141,7 @@ impl Gpu {
             self.state.old_fast_ppt = None;
         }
 
-        // Set slow limit and STAPM limit to the same value.
+        // Set slow limit
         if let Some(slow_ppt) = &self.generic.slow_ppt {
             if self.state.old_slow_ppt.is_none() {
                 match lock.get_slow_value() {
@@ -159,12 +158,6 @@ impl Gpu {
                     setting: SettingVariant::Gpu,
                 })
                 .unwrap_or_else(|e| errors.push(e));
-            lock.set_stapm_limit(*slow_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *slow_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
         } else if let Some(slow_ppt) = &self.state.old_slow_ppt {
             lock.set_slow_limit(*slow_ppt as _)
                 .map_err(|e| SettingError {
@@ -173,6 +166,34 @@ impl Gpu {
                 })
                 .unwrap_or_else(|e| errors.push(e));
             self.state.old_slow_ppt = None;
+        }
+
+        // Set STAPM limit
+        if let Some(stapm_ppt) = &self.generic.stapm_ppt {
+            if self.state.old_stapm_ppt.is_none() {
+                match lock.get_stapm_value() {
+                    Ok(val) => self.state.old_stapm_ppt = Some(val as _),
+                    Err(e) => errors.push(SettingError {
+                        msg: format!("RyzenAdj get_stapm_value() err: {}", e),
+                        setting: SettingVariant::Gpu,
+                    }),
+                }
+            }
+
+            lock.set_stapm_limit(*stapm_ppt as _)
+                .map_err(|e| SettingError {
+                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
+                    setting: SettingVariant::Gpu,
+                })
+                .unwrap_or_else(|e| errors.push(e));
+        } else if let Some(stapm_ppt) = &self.state.old_stapm_ppt {
+            lock.set_stapm_limit(*stapm_ppt as _)
+                .map_err(|e| SettingError {
+                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
+                    setting: SettingVariant::Gpu,
+                })
+                .unwrap_or_else(|e| errors.push(e));
+            self.state.old_stapm_ppt = None;
         }
 
         if let Some(clock_limits) = &self.generic.clock_limits {
@@ -263,14 +284,15 @@ impl Gpu {
                     setting: SettingVariant::Gpu,
                 })
                 .unwrap_or_else(|e| errors.push(e));
-            lock.set_stapm_limit(*slow_ppt as _)
+        }
+        if let Some(stapm_ppt) = &self.generic.stapm_ppt {
+            lock.set_stapm_limit(*stapm_ppt as _)
                 .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *slow_ppt, e),
+                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
                     setting: SettingVariant::Gpu,
                 })
                 .unwrap_or_else(|e| errors.push(e));
         }
-
 
         if let Some(clock_limits) = &self.generic.clock_limits {
             if let Some(max) = clock_limits.max {
@@ -327,6 +349,10 @@ impl TGpu for Gpu {
         self.generic.get_ppt()
     }
 
+    fn get_ppt_tdp(&self) -> (Option<u64>, Option<u64>, Option<u64>) {
+        self.generic.get_ppt_tdp()
+    }
+
     fn clock_limits(&mut self, limits: Option<MinMax<u64>>) {
         self.generic.clock_limits(limits)
     }
@@ -341,5 +367,18 @@ impl TGpu for Gpu {
 
     fn provider(&self) -> crate::persist::DriverJson {
         crate::persist::DriverJson::GenericAMD
+    }
+
+    fn ppt_tdp(&mut self, tdp: Option<u64>, fast: Option<u64>, slow: Option<u64>) {
+        log::info!("ppt_tdp: tdp: {:?}, fast: {:?}, slow: {:?}", tdp, fast, slow);
+        self.generic.ppt_tdp(tdp, fast, slow)
+    }
+
+    fn get_preset(&self) -> Option<u64> {
+        self.generic.get_preset()
+    }
+
+    fn set_preset(&mut self, preset: Option<u64>) {
+        self.generic.set_preset(preset)
     }
 }

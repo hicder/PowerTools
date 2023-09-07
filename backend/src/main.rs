@@ -211,8 +211,12 @@ fn main() -> Result<(), ()> {
         )
         // gpu API functions
         .register("GPU_set_ppt", api::gpu::set_ppt(api_sender.clone()))
+        .register("GPU_set_preset", api::gpu::set_preset(api_sender.clone()))
         .register_async("GPU_get_ppt", api::gpu::get_ppt(api_sender.clone()))
+        .register_async("GPU_get_ppt_tdp", api::gpu::get_ppt_tdp(api_sender.clone()))
+        .register_async("GPU_get_preset", api::gpu::get_preset(api_sender.clone()))
         .register("GPU_unset_ppt", api::gpu::unset_ppt(api_sender.clone()))
+        .register("GPU_set_ppt_tdp", api::gpu::set_ppt_tdp(api_sender.clone()))
         .register(
             "GPU_set_clock_limits",
             api::gpu::set_clock_limits(api_sender.clone()),

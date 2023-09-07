@@ -27,7 +27,7 @@ pub fn spawn(sender: Sender<ApiMessage>) -> JoinHandle<()> {
                     old_start.as_secs_f32()
                 );
             } else {
-                log::debug!("OnResume got sleep period of {}s", old_start.as_secs_f32());
+                // log::debug!("OnResume got sleep period of {}s", old_start.as_secs_f32());
             }
             thread::sleep(duration);
         }
