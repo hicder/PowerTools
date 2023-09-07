@@ -34,12 +34,13 @@ export class Gpu extends Component<backend.IdcProps> {
         const performanceDropdown: SingleDropdownOption[] = [
             {data: 0, label: <span>Silent 10W</span> }, 
             {data: 1, label: <span>Peformance 15W</span> }, 
+            {data: 5, label: <span>Performance 20W</span>},
             {data: 2, label: <span>Turbo 25W</span>}, 
             {data: 3, label: <span>Turbo 30W</span>}, 
             {data: 4, label: <span>Manual</span>}
         ];
 
-        const labels : string [] = ["Silent 10W", "Performance 15W", "Turbo 25W", "Turbo 30W", "Manual"];
+        const labels : string [] = ["Silent 10W", "Performance 15W", "Turbo 25W", "Turbo 30W", "Manual", "Performance 20W"];
 
         return (<Fragment>
             {/* GPU */}
@@ -118,6 +119,13 @@ export class Gpu extends Component<backend.IdcProps> {
                                     break;
                                 case 2:
                                     backend.resolve(backend.setGpuPptTdp(25000, 35000, 30000), (limits: number[]) => {
+                                        set_value(TDP, limits[0]/1000);
+                                        set_value(FAST_PPT_GPU, limits[1]);
+                                        set_value(SLOW_PPT_GPU, limits[2]);
+                                    });
+                                    break;
+                                case 5:
+                                    backend.resolve(backend.setGpuPptTdp(20000, 30000, 25000), (limits: number[]) => {
                                         set_value(TDP, limits[0]/1000);
                                         set_value(FAST_PPT_GPU, limits[1]);
                                         set_value(SLOW_PPT_GPU, limits[2]);
