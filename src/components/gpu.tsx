@@ -98,10 +98,12 @@ export class Gpu extends Component<backend.IdcProps> {
                         strDefaultLabel={get_value(PRESET_MODE_GPU) == null ? "Performance 15W" : labels[get_value(PRESET_MODE_GPU)]}
                         onChange={(elem: SingleDropdownOption) => {
                             backend.log(backend.LogLevel.Debug, "Performance dropdown selected " + elem.data.toString());
-                            backend.resolve(backend.setPreset(elem.data), (value) => {
-                                backend.log(backend.LogLevel.Info, "Preset mode is now " + value.toString());
-                                set_value(PRESET_MODE_GPU, value);
-                            });
+                            backend.resolve(backend.setPreset(elem.data), (_value) => {});
+
+                            // Set this outside instead of in the callback because it's faster for UI.
+                            backend.log(backend.LogLevel.Info, "Preset mode is now " + elem.data.toString());
+                            set_value(PRESET_MODE_GPU, elem.data);
+
                             switch (elem.data) {
                                 case 0:
                                     backend.resolve(backend.setGpuPptTdp(10000, 17000, 14000), (limits: number[]) => {
@@ -141,7 +143,8 @@ export class Gpu extends Component<backend.IdcProps> {
                                 case 4:
                                     break;
                             }
-                            reloadGUI("PerformancePreset");
+
+                            reloadGUI("performance " + (new Date()).getTime().toString());
                         }}
                     />
                     </Field>
