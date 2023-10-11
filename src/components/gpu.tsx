@@ -113,7 +113,7 @@ export class Gpu extends Component<backend.IdcProps> {
                                     });
                                     break;
                                 case 1:
-                                    backend.resolve(backend.setGpuPptTdp(15000, 25000, 20000), (limits: number[]) => {
+                                    backend.resolve(backend.setGpuPptTdp(15000, 17000, 15000), (limits: number[]) => {
                                         set_value(TDP, limits[0]/1000);
                                         set_value(FAST_PPT_GPU, limits[1]);
                                         set_value(SLOW_PPT_GPU, limits[2]);
@@ -127,7 +127,7 @@ export class Gpu extends Component<backend.IdcProps> {
                                     });
                                     break;
                                 case 5:
-                                    backend.resolve(backend.setGpuPptTdp(20000, 30000, 25000), (limits: number[]) => {
+                                    backend.resolve(backend.setGpuPptTdp(20000, 22000, 20000), (limits: number[]) => {
                                         set_value(TDP, limits[0]/1000);
                                         set_value(FAST_PPT_GPU, limits[1]);
                                         set_value(SLOW_PPT_GPU, limits[2]);
