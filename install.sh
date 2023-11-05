@@ -2,7 +2,7 @@
 
 [ "$UID" -eq 0 ] || exec sudo "$0" "$@"
 USER_DIR="$(getent passwd $SUDO_USER | cut -d: -f6)"
-WORKING_FOLDER="${USER_DIR}/homebrew/plugin/PowerTools"
+WORKING_FOLDER="${USER_DIR}/homebrew/plugins/PowerTools"
 
 # Clean directory
 mkdir -p /tmp/powertools_binary || true
