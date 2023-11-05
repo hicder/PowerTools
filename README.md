@@ -19,7 +19,7 @@ Alternatively, you can download `backend` and `index.js` from the Releases page.
 Note that all these commands are run inside the Ally.
 
 1. Please use Decky's [built-in store](https://plugins.deckbrew.xyz/) to install official releases of PowerTools.
-2. Copy these files to the decky loader's directory:
+2. Run this command once you've installed PowerTools to patch it:
 ```shell
 curl -L https://github.com/hicder/PowerTools/releases/latest/download/install.sh | sh
 ```
