@@ -21,13 +21,5 @@ Note that all these commands are run inside the Ally.
 1. Please use Decky's [built-in store](https://plugins.deckbrew.xyz/) to install official releases of PowerTools.
 2. Copy these files to the decky loader's directory:
 ```shell
-# Assume you've downloaded `backend`, `index.js`, `set-clock`, `set-clock-mode` to /tmp
-
-sudo systemctl stop plugin_loader
-rm $HOME/.config/powertools/limits_cache.json
-sudo cp /tmp/backend $HOME/homebrew/plugins/PowerTools/bin/backend
-sudo cp /tmp/index.js $HOME/homebrew/plugins/PowerTools/dist/index.js
-sudo cp /tmp/set-clock /usr/local/bin/set-clock
-sudo cp /tmp/set-clock-mode /usr/local/bin/set-clock-mode
-sudo systemctl start plugin_loader
+curl -L https://github.com/hicder/PowerTools/releases/latest/download/install.sh | sh
 ```
