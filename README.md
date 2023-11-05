@@ -27,7 +27,7 @@ sudo systemctl stop plugin_loader
 rm $HOME/.config/powertools/limits_cache.json
 sudo cp /tmp/backend $HOME/homebrew/plugins/PowerTools/bin/backend
 sudo cp /tmp/index.js $HOME/homebrew/plugins/PowerTools/dist/index.js
-sudo cp /tmp/set-clock /usr/loca/bin/set-clock
-sudo cp /tmp/set-clock-mode /usr/loca/bin/set-clock-mode
+sudo cp /tmp/set-clock /usr/local/bin/set-clock
+sudo cp /tmp/set-clock-mode /usr/local/bin/set-clock-mode
 sudo systemctl start plugin_loader
 ```
