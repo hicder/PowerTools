@@ -220,7 +220,7 @@ fn main() -> Result<(), ()> {
         .register(
             "GPU_set_clock_limits",
             api::gpu::set_clock_limits(api_sender.clone()),
-        )
+        )  
         .register_async(
             "GPU_get_clock_limits",
             api::gpu::get_clock_limits(api_sender.clone()),
