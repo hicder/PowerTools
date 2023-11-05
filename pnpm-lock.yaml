@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -8,6 +8,9 @@ dependencies:
   decky-frontend-lib:
     specifier: ~3.21.1
     version: 3.21.1
+  pnpm:
+    specifier: ^8.9.2
+    version: 8.10.2
   react-icons:
     specifier: ^4.9.0
     version: 4.9.0(react@18.2.0)
@@ -700,6 +703,12 @@ packages:
     engines: {node: '>=8.6'}
     dev: true
 
+  /pnpm@8.10.2:
+    resolution: {integrity: sha512-B4IJPVumx62UYggbwe8HdQFqS0EJ7KHh/tzqbxEBQ69fUJk9s2xCfU+oxivjkgoyJNsS2nGdJGyhndnxgEjDPA==}
+    engines: {node: '>=16.14'}
+    hasBin: true
+    dev: false
+
   /punycode@2.3.0:
     resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}
     engines: {node: '>=6'}
@@ -964,5 +973,4 @@ packages:
   file:src/usdpl_front:
     resolution: {directory: src/usdpl_front, type: directory}
     name: usdpl-front
-    version: 0.10.0
     dev: false
