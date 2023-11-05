@@ -153,9 +153,14 @@ const reload = function() {
     set_value(FAST_PPT_GPU, ppts[1]);
     set_value(SLOW_PPT_GPU, ppts[2]);
   });
-  backend.resolve(backend.getGpuClockLimits(), (limits: number[]) => {
-    set_value(CLOCK_MIN_GPU, limits[0]);
-    set_value(CLOCK_MAX_GPU, limits[1]);
+  backend.resolve_nullable(backend.getGpuClockLimits(), (limits: number[] | null) => {
+    if (limits == null) {
+      set_value(CLOCK_MIN_GPU, null);
+      set_value(CLOCK_MAX_GPU, null);
+    } else {
+      set_value(CLOCK_MIN_GPU, limits[0]);
+      set_value(CLOCK_MAX_GPU, limits[1]);
+    }
   });
   backend.resolve(backend.getGpuSlowMemory(), (status: boolean) => { set_value(SLOW_MEMORY_GPU, status) });
 

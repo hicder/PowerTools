@@ -198,52 +198,50 @@ impl Gpu {
 
         if let Some(clock_limits) = &self.generic.clock_limits {
             self.state.clock_limits_set = true;
+            self.set_clock_mode(self.state.clock_limits_set);
             if let Some(max) = clock_limits.max {
-                lock.set_max_gfxclk_freq(max as _)
-                    .map_err(|e| SettingError {
-                        msg: format!("RyzenAdj set_max_gfxclk_freq({}) err: {}", max, e),
-                        setting: SettingVariant::Gpu,
-                    })
-                    .unwrap_or_else(|e| errors.push(e));
-            }
-            if let Some(min) = clock_limits.min {
-                lock.set_min_gfxclk_freq(min as _)
-                    .map_err(|e| SettingError {
-                        msg: format!("RyzenAdj set_min_gfxclk_freq({}) err: {}", min, e),
-                        setting: SettingVariant::Gpu,
-                    })
-                    .unwrap_or_else(|e| errors.push(e));
-            }
-        } else if self.state.clock_limits_set {
-            self.state.clock_limits_set = false;
-            let limits = self.generic.limits();
-            if let Some(min_limits) = limits.clock_min_limits {
-                if let Some(max_limits) = limits.clock_max_limits {
-                    lock.set_max_gfxclk_freq(max_limits.max as _)
-                        .map_err(|e| SettingError {
-                            msg: format!(
-                                "RyzenAdj set_max_gfxclk_freq({}) err: {}",
-                                max_limits.max, e
-                            ),
-                            setting: SettingVariant::Gpu,
-                        })
-                        .unwrap_or_else(|e| errors.push(e));
-                    lock.set_min_gfxclk_freq(min_limits.min as _)
-                        .map_err(|e| SettingError {
-                            msg: format!(
-                                "RyzenAdj set_min_gfxclk_freq({}) err: {}",
-                                min_limits.min, e
-                            ),
-                            setting: SettingVariant::Gpu,
-                        })
-                        .unwrap_or_else(|e| errors.push(e));
+                if let Some(min) = clock_limits.min  {
+                    self.set_max_min_clock(max, min);
                 }
             }
+        } else {
+            self.state.clock_limits_set = false;
+            self.set_clock_mode(self.state.clock_limits_set);
         }
         if errors.is_empty() {
             Ok(())
         } else {
             Err(errors)
+        }
+    }
+
+    fn set_max_min_clock(&self, max: u64, min: u64) {
+        log::info!("Setting max: {}, min: {}", max, min);
+        std::process::Command::new("/usr/local/bin/set-clock")
+            .arg(min.to_string())
+            .arg(max.to_string())
+            .arg("card1")
+            .output()
+            .expect("Failed to execute set-clock");
+    }
+
+    fn set_clock_mode(&self, clock_limits_set: bool) {
+        if !clock_limits_set {
+            log::info!("Setting clock mode to auto");
+            // Execute /usr/local/bin/set-clock-mode auto card1
+            std::process::Command::new("/usr/local/bin/set-clock-mode")
+                .arg("auto")
+                .arg("card1")
+                .output()
+                .expect("Failed to execute set-clock-mode");
+        } else {
+            log::info!("Setting clock mode to manual");
+            // Execute /usr/local/bin/set-clock-mode manual card1
+            std::process::Command::new("/usr/local/bin/set-clock-mode")
+                .arg("manual")
+                .arg("card1")
+                .output()
+                .expect("Failed to execute set-clock-mode");
         }
     }
 
@@ -295,21 +293,11 @@ impl Gpu {
         }
 
         if let Some(clock_limits) = &self.generic.clock_limits {
+            self.set_clock_mode(self.state.clock_limits_set);
             if let Some(max) = clock_limits.max {
-                lock.set_max_gfxclk_freq(max as _)
-                    .map_err(|e| SettingError {
-                        msg: format!("RyzenAdj set_max_gfxclk_freq({}) err: {}", max, e),
-                        setting: SettingVariant::Gpu,
-                    })
-                    .unwrap_or_else(|e| errors.push(e));
-            }
-            if let Some(min) = clock_limits.min {
-                lock.set_min_gfxclk_freq(min as _)
-                    .map_err(|e| SettingError {
-                        msg: format!("RyzenAdj set_min_gfxclk_freq({}) err: {}", min, e),
-                        setting: SettingVariant::Gpu,
-                    })
-                    .unwrap_or_else(|e| errors.push(e));
+                if let Some(min) = clock_limits.min  {
+                    self.set_max_min_clock(max, min);
+                }
             }
         }
         Ok(())

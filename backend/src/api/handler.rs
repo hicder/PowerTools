@@ -296,8 +296,7 @@ impl ApiMessageHandler {
                 }
                 // save
                 let is_persistent = *settings.general.persistent();
-                let save_path =
-                    crate::utility::settings_dir().join(settings.general.get_path().clone());
+                let save_path = crate::utility::settings_dir().join(settings.general.get_path());
                 if is_persistent {
                     log::info!("Saving settings to {}", save_path.display());
                 } else {

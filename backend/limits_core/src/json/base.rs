@@ -175,8 +175,8 @@ impl Default for Base {
                             ppt_step: Some(1_000),
                             tdp: Some(super::RangeLimit { min: Some(1_000), max: Some(30_000) }),
                             tdp_step: Some(1_000),
-                            clock_min: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
-                            clock_max: Some(super::RangeLimit { min: Some(800), max: Some(2900) }),
+                            clock_min: Some(super::RangeLimit { min: Some(800), max: Some(2700) }),
+                            clock_max: Some(super::RangeLimit { min: Some(800), max: Some(2700) }),
                             clock_step: Some(100),
                             ..Default::default()
                         })),

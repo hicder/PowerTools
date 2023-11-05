@@ -17,6 +17,8 @@ import {
     FAST_PPT_GPU,
     TDP,
     PRESET_MODE_GPU,
+    CLOCK_MIN_GPU,
+    CLOCK_MAX_GPU,
 } from "../consts";
 import { set_value, get_value } from "usdpl-front";
 
@@ -172,6 +174,81 @@ export class Gpu extends Component<backend.IdcProps> {
                                 });
                         }
                     }}
+                />}
+            </PanelSectionRow>
+            {((get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_min_limits != null || (get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_max_limits != null) && <PanelSectionRow>
+                <ToggleField
+                checked={get_value(CLOCK_MIN_GPU) != null || get_value(CLOCK_MAX_GPU) != null}
+                label={tr("Frequency Limits")}
+                description={tr("Set bounds on clock speed")}
+                onChange={(value: boolean) => {
+                    backend.log(backend.LogLevel.Info, "CHANGED GPU CLOCK LIMIT: " + value.toString());
+                    if (value) {
+                        let clock_min_limits = (get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_min_limits;
+                        let clock_max_limits = (get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_max_limits;
+                        if (clock_min_limits != null) {
+                            set_value(CLOCK_MIN_GPU, clock_min_limits.min);
+                        }
+                        if (clock_max_limits != null) {
+                            set_value(CLOCK_MAX_GPU, clock_max_limits.max);
+                        }
+                        reloadGUI("GPUFreqToggle");
+                    } else {
+                        set_value(CLOCK_MIN_GPU, null);
+                        set_value(CLOCK_MAX_GPU, null);
+                        backend.resolve(backend.unsetGpuClockLimits(), (_: any[]) => {
+                            reloadGUI("GPUUnsetFreq");
+                        });
+                    }
+                }}
+                />
+            </PanelSectionRow>}
+            <PanelSectionRow>
+                { get_value(CLOCK_MIN_GPU) != null && <SliderField
+                label={tr("Minimum (MHz)")}
+                value={get_value(CLOCK_MIN_GPU)}
+                max={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_min_limits!.max}
+                min={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_min_limits!.min}
+                step={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_step}
+                showValue={true}
+                disabled={get_value(CLOCK_MIN_GPU) == null}
+                onChange={(val: number) => {
+                    backend.log(backend.LogLevel.Info, "GPU Clock Min is now " + val.toString());
+                    const valNow = get_value(CLOCK_MIN_GPU);
+                    const maxNow = get_value(CLOCK_MAX_GPU);
+                    if (val != valNow && ((maxNow != null && val <= maxNow) || maxNow == null)) {
+                        backend.resolve(backend.setGpuClockLimits(val, get_value(CLOCK_MAX_GPU)),
+                                        (limits: number[]) => {
+                            set_value(CLOCK_MIN_GPU, limits[0]);
+                            set_value(CLOCK_MAX_GPU, limits[1]);
+                            reloadGUI("GPUMinClock");
+                        });
+                    }
+                }}
+                />}
+            </PanelSectionRow>
+            <PanelSectionRow>
+                {get_value(CLOCK_MAX_GPU) != null && <SliderField
+                label={tr("Maximum (MHz)")}
+                value={get_value(CLOCK_MAX_GPU)}
+                max={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_max_limits!.max}
+                min={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_max_limits!.min}
+                step={(get_value(LIMITS_INFO) as backend.SettingsLimits).gpu.clock_step}
+                showValue={true}
+                disabled={get_value(CLOCK_MAX_GPU) == null}
+                onChange={(val: number) => {
+                    backend.log(backend.LogLevel.Info, "GPU Clock Max is now " + val.toString());
+                    const valNow = get_value(CLOCK_MAX_GPU);
+                    const minNow = get_value(CLOCK_MIN_GPU);
+                    if (val != valNow && ((minNow != null && val >= minNow) || minNow == null)) {
+                        backend.resolve(backend.setGpuClockLimits(get_value(CLOCK_MIN_GPU), val),
+                                        (limits: number[]) => {
+                            set_value(CLOCK_MIN_GPU, limits[0]);
+                            set_value(CLOCK_MAX_GPU, limits[1]);
+                            reloadGUI("GPUMaxClock");
+                        });
+                    }
+                }}
                 />}
             </PanelSectionRow>
         </Fragment>);
