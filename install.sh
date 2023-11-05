@@ -10,10 +10,10 @@ pushd /tmp/powertools_binary
 rm -rf *
 
 systemctl stop plugin_loader || true
-curl -L https://github.com/hicder/PowerTools/releases/download/latest/backend -o backend
-curl -L https://github.com/hicder/PowerTools/releases/download/latest/index.js -o index.js
-curl -L https://github.com/hicder/PowerTools/releases/download/latest/set-clock -o set-clock
-curl -L https://github.com/hicder/PowerTools/releases/download/latest/set-clock-mode -o set-clock-mode
+curl -L https://github.com/hicder/PowerTools/releases/latest/download/backend -o backend
+curl -L https://github.com/hicder/PowerTools/releases/latest/download/index.js -o index.js
+curl -L https://github.com/hicder/PowerTools/releases/latest/download/set-clock -o set-clock
+curl -L https://github.com/hicder/PowerTools/releases/latest/download/set-clock-mode -o set-clock-mode
 
 chmod +x backend set-clock set-clock-mode
 
