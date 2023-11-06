@@ -20,6 +20,7 @@ sysfuss = { version = "0.2", features = ["derive"] }#, path = "../../sysfs-nav" 
 # async
 tokio = { version = "*", features = ["time"] }
 async-trait = { version = "0.1" }
+async-std = { version = "1", features = ["attributes", "tokio1"] }
 
 # logging
 log = "0.4"
@@ -31,6 +32,7 @@ regex = "1"
 libryzenadj = { version = "0.13.0" }
 # ureq's tls feature does not like musl targets
 ureq = { version = "2", features = ["json", "gzip", "brotli", "charset"], default-features = false, optional = true }
+evdev = { version = "0.12.1", features = ["tokio", "serde"]}
 
 [features]
 default = ["online", "decky"]
