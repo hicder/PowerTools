@@ -1,8 +1,0 @@
-#!/usr/bin/bash
-
-min_clk=$1
-max_clk=$2
-card=$3
-/usr/bin/echo "s 0 ${min_clk}" > /sys/class/drm/${card}/device/pp_od_clk_voltage
-/usr/bin/echo "s 1 ${max_clk}" > /sys/class/drm/${card}/device/pp_od_clk_voltage
-/usr/bin/echo "c" > /sys/class/drm/${card}/device/pp_od_clk_voltage

@@ -349,12 +349,12 @@ pub fn get_periodicals(sender: Sender<ApiMessage>) -> impl AsyncCallable {
 
             let settings_path = wait_for_response(&*sender_locked, rx_path,
                     ApiMessage::General(GeneralMessage::GetPath(callback_path)), "general get path");
+            log::info!("Got path: {:?}", settings_path);
             vec![
                 super::utility::map_optional(curr),
                 super::utility::map_optional(charge_now),
                 super::utility::map_optional(charge_full),
                 super::utility::map_optional(charge_power),
-
                 super::utility::map_optional(settings_path.to_str()),
             ]
         }

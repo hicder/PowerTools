@@ -192,7 +192,11 @@ export class Gpu extends Component<backend.IdcProps> {
                         if (clock_max_limits != null) {
                             set_value(CLOCK_MAX_GPU, clock_max_limits.max);
                         }
-                        reloadGUI("GPUFreqToggle");
+                        if (clock_min_limits != null && clock_max_limits != null) {
+                            backend.resolve(backend.setGpuClockLimits(clock_min_limits.min, clock_max_limits.max), (_: any[]) => {
+                                reloadGUI("GPUFreqToggle");
+                            });
+                        }
                     } else {
                         set_value(CLOCK_MIN_GPU, null);
                         set_value(CLOCK_MAX_GPU, null);

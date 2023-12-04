@@ -1,4 +1,5 @@
 use std::{fs, thread};
+use std::io::Write;
 use libryzenadj::RyzenAdj;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -217,31 +218,22 @@ impl Gpu {
 
     fn set_max_min_clock(&self, max: u64, min: u64) {
         log::info!("Setting max: {}, min: {}", max, min);
-        std::process::Command::new("/usr/local/bin/set-clock")
-            .arg(min.to_string())
-            .arg(max.to_string())
-            .arg("card1")
-            .output()
-            .expect("Failed to execute set-clock");
+
+        let min_str = format!("s 0 {}", min);
+        let max_str = format!("s 1 {}", max);
+
+        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "{}", min_str).unwrap();
+        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "{}", max_str).unwrap();
+        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "c").unwrap();
     }
 
     fn set_clock_mode(&self, clock_limits_set: bool) {
         if !clock_limits_set {
             log::info!("Setting clock mode to auto");
-            // Execute /usr/local/bin/set-clock-mode auto card1
-            std::process::Command::new("/usr/local/bin/set-clock-mode")
-                .arg("auto")
-                .arg("card1")
-                .output()
-                .expect("Failed to execute set-clock-mode");
+            write!(fs::File::create("/sys/class/drm/card1/device/power_dpm_force_performance_level").unwrap(), "auto").unwrap();
         } else {
             log::info!("Setting clock mode to manual");
-            // Execute /usr/local/bin/set-clock-mode manual card1
-            std::process::Command::new("/usr/local/bin/set-clock-mode")
-                .arg("manual")
-                .arg("card1")
-                .output()
-                .expect("Failed to execute set-clock-mode");
+            write!(fs::File::create("/sys/class/drm/card1/device/power_dpm_force_performance_level").unwrap(), "manual").unwrap();
         }
     }
 

@@ -238,6 +238,7 @@ impl TGpu for Gpu {
     }
 
     fn get_preset(&self) -> Option<u64> {
+        log::info!("Getting GPU preset: {:?}", self.preset);
         self.preset
     }
 
