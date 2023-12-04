@@ -4,11 +4,6 @@ mod settings;
 mod state;
 
 mod consts;
-use std::fs::File;
-use std::{thread, io};
-use std::time::Duration;
-use std::io::Write;
-
 use consts::*;
 mod power_worker;
 mod resume_worker;
@@ -20,79 +15,8 @@ use settings::OnSet;
 
 use simplelog::{LevelFilter, WriteLogger};
 
-use tokio::runtime::Runtime;
 use usdpl_back::core::serdes::Primitive;
 use usdpl_back::Instance;
-
-pub fn pick_device() -> Option<evdev::Device> {
-    let target_vendor_id = 0xb05u16;
-    let target_product_id = 0x1abeu16;
-
-    let devices = evdev::enumerate();
-    for (_, device) in devices {
-        let input_id = device.input_id();
-        log::debug!("Found device: {:?}", input_id);
-
-        if input_id.vendor() == target_vendor_id && input_id.product() == target_product_id {
-            log::debug!("{:?}", device.supported_keys());
-            if device.supported_keys().map_or(false, |keys| keys.contains(evdev::Key::KEY_PROG1) || keys.contains(evdev::Key::BTN_MIDDLE)) {
-                return Some(device);   
-            }
-        }
-    }
-
-    None
-}
-
-pub fn recover_nkey() -> io::Result<()> {
-    // Check for "ROG Ally" in "/sys/devices/virtual/dmi/id/product_family"
-    
-    // Check if a specific USB device is not present
-    log::info!("ROG Ally detected and USB device 0b05:1abe not present, proceeding with pm_test");
-
-    // Write to "/sys/power/pm_test"
-    writeln!(File::create("/sys/power/pm_test")?, "platform")?;
-    log::info!("Set power management test mode to platform");
-
-    // Write "freeze" to "/sys/power/state"
-    writeln!(File::create("/sys/power/state")?, "freeze")?;
-    log::info!("Requested system to enter freeze state");
-
-    // Write "none" to "/sys/power/pm_test"
-    writeln!(File::create("/sys/power/pm_test")?, "none")?;
-    log::info!("Disabled power management test mode");
-    Ok(())
-}
-
-
-pub fn start_suspend_fixer() -> Option<tokio::task::JoinHandle<()>> {
-    let device = pick_device();
-    match device {
-        Some(device) => Some(tokio::spawn(async move {
-            if let Ok(mut events) = device.into_event_stream() {
-                loop {
-                    match events.next_event().await {
-                        Ok(_event) => {
-                        },
-                        Err(_) => {
-                            log::info!("Error reading event stream, retrying in 1 second");
-                            thread::sleep(Duration::from_secs(1));
-                            break
-                        }
-                    };
-                }
-            }
-        })),
-        None => {
-            log::info!("No Ally-specific found, retrying in 2 seconds");
-            log::info!("N_key lost, attempting to trigger recovery script");
-            let _ = recover_nkey();
-
-            thread::sleep(Duration::from_secs(2));
-            None
-        }
-    }
-}
 
 fn main() -> Result<(), ()> {
     #[cfg(debug_assertions)]
@@ -386,17 +310,5 @@ fn main() -> Result<(), ()> {
     }
 
     api_worker::spawn(loaded_settings, api_handler);
-
-    thread::spawn( move || {
-        let rt  = Runtime::new().unwrap();
-        rt.block_on(async move {
-            loop {
-                match start_suspend_fixer() {
-                    Some(handle) => handle.await.unwrap(),
-                    None => continue,
-                }
-            }
-        });
-    });
     instance.run_blocking()
 }
