@@ -1,6 +1,4 @@
 use std::{fs, thread};
-use std::io::Write;
-use libryzenadj::RyzenAdj;
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -10,22 +8,16 @@ use crate::settings::MinMax;
 use crate::settings::TGpu;
 use crate::settings::{OnResume, OnSet, SettingError, SettingVariant};
 
-fn ryzen_adj_or_log() -> Option<Mutex<RyzenAdj>> {
-    match RyzenAdj::new() {
-        Ok(x) => Some(Mutex::new(x)),
-        Err(e) => {
-            log::error!("RyzenAdj init error: {}", e);
-            None
-        }
-    }
+fn create_lock() -> Option<Mutex<i64>> {
+    Some(Mutex::new(0))
 }
 
-unsafe impl Send for Gpu {} // implementor (RyzenAdj) may be unsafe
+unsafe impl Send for Gpu {}
 
 //#[derive(Debug)]
 pub struct Gpu {
     generic: GenericGpu,
-    implementor: Option<Mutex<RyzenAdj>>,
+    lock: Option<Mutex<i64>>,
     state: crate::state::generic::Gpu, // NOTE this is re-used for simplicity
 }
 
@@ -42,7 +34,7 @@ impl Gpu {
     pub fn from_limits(limits: limits_core::json::GenericGpuLimit) -> Self {
         Self {
             generic: GenericGpu::from_limits(limits),
-            implementor: ryzen_adj_or_log(),
+            lock: create_lock(),
             state: Default::default(),
         }
     }
@@ -54,7 +46,7 @@ impl Gpu {
     ) -> Self {
         Self {
             generic: GenericGpu::from_json_and_limits(other, version, limits),
-            implementor: ryzen_adj_or_log(),
+            lock: create_lock(),
             state: Default::default(),
         }
     }
@@ -67,8 +59,8 @@ impl Gpu {
         };
 
         match tdp {
-            val if val < 12_000 => 2,
-            val if (12_000..=24_000).contains(&val) => 0,
+            val if val < 9_000 => 2,
+            val if (9_000..=18_000).contains(&val) => 0,
             _ => 1,
         }
     }
@@ -90,21 +82,39 @@ impl Gpu {
         log::info!("New thermal policy: {}", thermal_policy);
     }
 
+    fn set_stapm_ppt(&self, limit: i32) {
+        log::info!("Setting stamp ppt to {}", limit);
+        let file_path = "/sys/devices/platform/asus-nb-wmi/ppt_pl1_spl";
+        fs::write(file_path, limit.to_string()).expect("Couldn't change STAMP PPT");
+    }
+
+    fn set_slow_ppt(&self, limit: i32) {
+        log::info!("Setting slow ppt to {}", limit);
+        let file_path = "/sys/devices/platform/asus-nb-wmi/ppt_pl2_sppt";
+        fs::write(file_path, limit.to_string()).expect("Couldn't change SLOW PPT");
+    }
+
+    fn set_fast_ppt(&self, limit: i32) {
+        log::info!("Setting fast ppt to {}", limit);
+        let file_path = "/sys/devices/platform/asus-nb-wmi/ppt_fppt";
+        fs::write(file_path, limit.to_string()).expect("Couldn't change FAST PPT");
+    }
+
     fn set_all(&mut self) -> Result<(), Vec<SettingError>> {
-        let mutex = match &self.implementor {
+        let mutex = match &self.lock {
             Some(x) => x,
             None => {
                 return Err(vec![SettingError {
-                    msg: "RyzenAdj unavailable".to_owned(),
+                    msg: "Lock unavailable".to_owned(),
                     setting: SettingVariant::Gpu,
                 }]);
             }
         };
-        let lock = match mutex.lock() {
+        let _lock = match mutex.lock() {
             Ok(x) => x,
             Err(e) => {
                 return Err(vec![SettingError {
-                    msg: format!("RyzenAdj lock acquire failed: {}", e),
+                    msg: format!("Lock lock acquire failed: {}", e),
                     setting: SettingVariant::Gpu,
                 }]);
             }
@@ -115,86 +125,27 @@ impl Gpu {
         let thermal_policy = self.get_thermal_policy();
         self.set_thermal_policy(thermal_policy);
 
-        let mut errors = Vec::new();
         if let Some(fast_ppt) = &self.generic.fast_ppt {
-            if self.state.old_fast_ppt.is_none() {
-                match lock.get_fast_value() {
-                    Ok(val) => self.state.old_fast_ppt = Some(val as _),
-                    Err(e) => errors.push(SettingError {
-                        msg: format!("RyzenAdj get_fast_value() err: {}", e),
-                        setting: SettingVariant::Gpu,
-                    }),
-                }
-            }
-            lock.set_fast_limit(*fast_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_fast_limit({}) err: {}", *fast_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-        } else if let Some(fast_ppt) = &self.state.old_fast_ppt {
-            lock.set_fast_limit(*fast_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_fast_limit({}) err: {}", *fast_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-            self.state.old_fast_ppt = None;
+            let value = *fast_ppt as i32;
+            self.set_fast_ppt(value / 1000);
+        } else {
+            self.set_fast_ppt(17);
         }
 
         // Set slow limit
         if let Some(slow_ppt) = &self.generic.slow_ppt {
-            if self.state.old_slow_ppt.is_none() {
-                match lock.get_slow_value() {
-                    Ok(val) => self.state.old_fast_ppt = Some(val as _),
-                    Err(e) => errors.push(SettingError {
-                        msg: format!("RyzenAdj get_slow_value() err: {}", e),
-                        setting: SettingVariant::Gpu,
-                    }),
-                }
-            }
-            lock.set_slow_limit(*slow_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_slow_limit({}) err: {}", *slow_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-        } else if let Some(slow_ppt) = &self.state.old_slow_ppt {
-            lock.set_slow_limit(*slow_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_slow_limit({}) err: {}", *slow_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-            self.state.old_slow_ppt = None;
+            let value = *slow_ppt as i32;
+            self.set_slow_ppt(value / 1000);
+        } else {
+            self.set_slow_ppt(15);
         }
 
         // Set STAPM limit
         if let Some(stapm_ppt) = &self.generic.stapm_ppt {
-            if self.state.old_stapm_ppt.is_none() {
-                match lock.get_stapm_value() {
-                    Ok(val) => self.state.old_stapm_ppt = Some(val as _),
-                    Err(e) => errors.push(SettingError {
-                        msg: format!("RyzenAdj get_stapm_value() err: {}", e),
-                        setting: SettingVariant::Gpu,
-                    }),
-                }
-            }
-
-            lock.set_stapm_limit(*stapm_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-        } else if let Some(stapm_ppt) = &self.state.old_stapm_ppt {
-            lock.set_stapm_limit(*stapm_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
-            self.state.old_stapm_ppt = None;
+            let value = *stapm_ppt as i32;
+            self.set_stapm_ppt(value / 1000);
+        } else {
+            self.set_stapm_ppt(15);
         }
 
         if let Some(clock_limits) = &self.generic.clock_limits {
@@ -209,79 +160,59 @@ impl Gpu {
             self.state.clock_limits_set = false;
             self.set_clock_mode(self.state.clock_limits_set);
         }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+        Ok(())
     }
 
     fn set_max_min_clock(&self, max: u64, min: u64) {
         log::info!("Setting max: {}, min: {}", max, min);
 
-        let min_str = format!("s 0 {}", min);
-        let max_str = format!("s 1 {}", max);
-
-        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "{}", min_str).unwrap();
-        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "{}", max_str).unwrap();
-        write!(fs::File::create("/sys/class/drm/card1/device/pp_od_clk_voltage").expect("cant create file"), "c").unwrap();
+        fs::write("/sys/class/drm/card1/device/pp_od_clk_voltage", format!("s 0 {}", min)).expect("cant write file");
+        fs::write("/sys/class/drm/card1/device/pp_od_clk_voltage", format!("s 1 {}", max)).expect("cant write file");
+        fs::write("/sys/class/drm/card1/device/pp_od_clk_voltage", "c").expect("cant write file");
     }
 
     fn set_clock_mode(&self, clock_limits_set: bool) {
         if !clock_limits_set {
             log::info!("Setting clock mode to auto");
-            write!(fs::File::create("/sys/class/drm/card1/device/power_dpm_force_performance_level").unwrap(), "auto").unwrap();
+            fs::write("/sys/class/drm/card1/device/power_dpm_force_performance_level", "auto").expect("cant write file /sys/class/drm/card1/device/power_dpm_force_performance_level");
         } else {
             log::info!("Setting clock mode to manual");
-            write!(fs::File::create("/sys/class/drm/card1/device/power_dpm_force_performance_level").unwrap(), "manual").unwrap();
+            fs::write("/sys/class/drm/card1/device/power_dpm_force_performance_level", "manual").expect("cant write file /sys/class/drm/card1/device/power_dpm_force_performance_level");
         }
     }
 
     fn resume_all(&self) -> Result<(), Vec<SettingError>> {
         // like set_all() but without updating state
         // -- assumption: state is already up to date
-        let mutex = match &self.implementor {
+        let mutex = match &self.lock {
             Some(x) => x,
             None => {
                 return Err(vec![SettingError {
-                    msg: "RyzenAdj unavailable".to_owned(),
+                    msg: "Lock unavailable".to_owned(),
                     setting: SettingVariant::Gpu,
                 }]);
             }
         };
-        let lock = match mutex.lock() {
+        let _lock = match mutex.lock() {
             Ok(x) => x,
             Err(e) => {
                 return Err(vec![SettingError {
-                    msg: format!("RyzenAdj lock acquire failed: {}", e),
+                    msg: format!("Lock acquire failed: {}", e),
                     setting: SettingVariant::Gpu,
                 }]);
             }
         };
-        let mut errors = Vec::new();
         if let Some(fast_ppt) = &self.generic.fast_ppt {
-            lock.set_fast_limit(*fast_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_fast_limit({}) err: {}", *fast_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
+            let value = *fast_ppt as i32;
+            self.set_fast_ppt(value / 1000);
         }
         if let Some(slow_ppt) = &self.generic.slow_ppt {
-            lock.set_slow_limit(*slow_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_slow_limit({}) err: {}", *slow_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
+            let value = *slow_ppt as i32;
+            self.set_slow_ppt(value / 1000);
         }
         if let Some(stapm_ppt) = &self.generic.stapm_ppt {
-            lock.set_stapm_limit(*stapm_ppt as _)
-                .map_err(|e| SettingError {
-                    msg: format!("RyzenAdj set_stapm_limit({}) err: {}", *stapm_ppt, e),
-                    setting: SettingVariant::Gpu,
-                })
-                .unwrap_or_else(|e| errors.push(e));
+            let value = *stapm_ppt as i32;
+            self.set_stapm_ppt(value / 1000);
         }
 
         if let Some(clock_limits) = &self.generic.clock_limits {
